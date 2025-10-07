@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Client OAuth2</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        a { text-decoration: none; padding: 10px 20px; background-color: #007bff; color: white; border-radius: 5px;}
+        div { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Bienvenue sur l'application Client</h1>
+
+    <div th:if="${username == null}">
+        <p>Pour accéder aux ressources, veuillez vous connecter.</p>
+        <a href="/oauth2/authorization/server-auth">Se connecter</a>
+    </div>
+
+    <div th:if="${username != null}">
+        <h2>Bonjour, <span th:text="${username}"></span> !</h2>
+        <p>Vous êtes maintenant authentifié via le serveur OAuth2.</p>
+    </div>
+
+</body>
+</html>

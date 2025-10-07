@@ -1,0 +1,54 @@
+# Fichiers de log
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Fichiers temporaires
+*.tmp
+
+# Fichiers compilés et packages
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+# Ignorer le binaire du Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+
+### Fichiers IDE ###
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+.nb-gradle/
+
+# VS Code
+.vscode/
+
+
+### Fichiers système ###
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
