@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.smilesmile1973.authenticatoroauth2.service.CustomOAuth2AuthorizationService;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,6 +90,7 @@ public class TokenController {
                 Map<String, Object> accessToken = new HashMap<>();
                 accessToken.put("expiresAt", auth.getAccessToken().getToken().getExpiresAt());
                 accessToken.put("scopes", auth.getAccessToken().getToken().getScopes());
+                accessToken.put("tokenvalue", auth.getAccessToken().getToken().getTokenValue());
                 tokenInfo.put("accessToken", accessToken);
             }
 
@@ -115,8 +118,7 @@ public class TokenController {
         return ResponseEntity.ok(tokens);
     }
 
-    @GetMapping("/current-user")  // MODIFIED: New method added to check if connected and get username
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/current-user") // MODIFIED: New method added to check if connected and get username
     public ResponseEntity<Map<String, Object>> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Map<String, Object> response = new HashMap<>();
@@ -130,5 +132,17 @@ public class TokenController {
             LOG.info("Current user checked: authenticated=false");
         }
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request) {
+        try {
+            request.logout();
+            LOG.info("User logged out successfully");
+            return ResponseEntity.ok("Logged out successfully");
+        } catch (Exception e) {
+            LOG.error("Logout failed", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Logout failed");
+        }
     }
 }
