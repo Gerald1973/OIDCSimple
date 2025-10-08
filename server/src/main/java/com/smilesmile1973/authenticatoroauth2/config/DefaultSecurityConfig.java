@@ -14,10 +14,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+
+import com.smilesmile1973.authenticatoroauth2.service.CustomOAuth2AuthorizationService;
 
 @Configuration
 @EnableWebSecurity
@@ -31,7 +34,7 @@ public class DefaultSecurityConfig {
         LOG.info("Initializing OAuth2 Authorization Server filter chain");
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-            .oidc(withDefaults());    // Enable OpenID Connect 1.0
+                .oidc(withDefaults()); // Enable OpenID Connect 1.0
         return http.formLogin(withDefaults()).build();
     }
 
@@ -39,9 +42,10 @@ public class DefaultSecurityConfig {
     @Order(2)
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         LOG.info("Initializing default security filter chain for non-OAuth2 endpoints");
-        http.authorizeHttpRequests(authorizeRequests -> authorizeRequests.anyRequest()
-                .authenticated())
-            .formLogin(withDefaults());
+        http.authorizeHttpRequests(
+                authorizeRequests -> authorizeRequests.requestMatchers("/admin/**").hasRole("ADMIN").anyRequest()
+                        .authenticated())
+                .formLogin(withDefaults());
         return http.build();
     }
 
@@ -49,12 +53,17 @@ public class DefaultSecurityConfig {
     UserDetailsService users() {
         PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
         UserDetails user = User.builder()
-            .username("admin")
-            .password("password")
-            .passwordEncoder(encoder::encode)
-            .roles("USER")
-            .build();
+                .username("admin")
+                .password("password")
+                .passwordEncoder(encoder::encode)
+                .roles("ADMIN")
+                .build();
         return new InMemoryUserDetailsManager(user);
+    }
+
+    @Bean
+    OAuth2AuthorizationService oAuth2AuthorizationService() {
+        return new CustomOAuth2AuthorizationService(); // MODIFIED: Instantiates the new custom service
     }
 
 }

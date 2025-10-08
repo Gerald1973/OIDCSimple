@@ -55,4 +55,18 @@ public class PrincipalController {
         }
         return response;
     }
+
+    @GetMapping("/principal/logout")
+    public Map<String, Object> logout(HttpServletRequest request) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            request.logout();  // Invalidate the current session and logout the user
+            response.put("message", "User logged out successfully");
+            LOG.info("User logged out successfully");
+        } catch (Exception e) {
+            response.put("error", "Logout failed: " + e.getMessage());
+            LOG.error("Logout failed", e);
+        }
+        return response;
+    }
 }
