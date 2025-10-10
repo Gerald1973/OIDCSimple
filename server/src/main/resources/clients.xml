@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<clients>
+    <client>
+        <id>articles-client-id</id>
+        <clientId>articles-client</clientId>
+        <clientSecret>{noop}secret</clientSecret>
+        <clientName>Articles Client</clientName>
+        <authenticationMethods>client_secret_basic</authenticationMethods>
+        <grantTypes>authorization_code,refresh_token</grantTypes>
+        <redirectUris>http://127.0.0.1:8081/login/oauth2/code/articles-client-oidc,http://127.0.0.1:8081/authorized</redirectUris>
+        <scopes>openid,articles.read</scopes>
+        <accessTokenDuration>18000</accessTokenDuration>
+        <refreshTokenDuration>86400</refreshTokenDuration>
+    </client>
+    <!--<client>
+        <id>admin-client-id</id>
+        <clientId>admin-client</clientId>
+        <clientSecret>{noop}secret2</clientSecret>
+        <clientName>Admin Client</clientName>
+        <authenticationMethods>client_secret_basic</authenticationMethods>
+        <grantTypes>authorization_code,refresh_token</grantTypes>
+        <redirectUris>http://127.0.0.1:8082/login/oauth2/code/admin-client-oidc,http://127.0.0.1:8082/authorized</redirectUris>
+        <scopes>openid,admin.read,admin.write</scopes>
+        <accessTokenDuration>7200</accessTokenDuration>
+        <refreshTokenDuration>604800</refreshTokenDuration>
+    </client>-->
+</clients>

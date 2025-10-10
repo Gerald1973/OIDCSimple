@@ -118,7 +118,7 @@ public class TokenController {
         return ResponseEntity.ok(tokens);
     }
 
-    @GetMapping("/current-user") // MODIFIED: New method added to check if connected and get username
+    @GetMapping("/current-user")
     public ResponseEntity<Map<String, Object>> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Map<String, Object> response = new HashMap<>();

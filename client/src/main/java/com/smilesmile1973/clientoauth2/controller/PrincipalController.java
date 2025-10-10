@@ -18,6 +18,7 @@ public class PrincipalController {
 
     private static final Logger LOG = LoggerFactory.getLogger(PrincipalController.class);
 
+
     @GetMapping({ "/principal/info" })
     public Map<String, Object> index(@AuthenticationPrincipal OAuth2User principal, HttpServletRequest request) {
         LOG.info("Accessing index page ({}); Principal present: {}", request.getRequestURI(), principal != null);
@@ -28,30 +29,6 @@ public class PrincipalController {
         } else {
             response.put("error", "No authenticated principal found");
             LOG.warn("No principal present for request: {}", request.getRequestURI());
-        }
-        return response;
-    }
-
-    @GetMapping("/principal/token")
-    public Map<String, Object> getTokenDetails(
-            @RegisteredOAuth2AuthorizedClient("articles-client-authorization-code") OAuth2AuthorizedClient authorizedClient,
-            HttpServletRequest request) {
-        LOG.info("Accessing /principal/token endpoint; AuthorizedClient present: {}", authorizedClient != null);
-        Map<String, Object> response = new HashMap<>();
-        if (authorizedClient != null) {
-            // Extract access token details
-            response.put("accessToken", authorizedClient.getAccessToken().getTokenValue());
-            response.put("scopes", authorizedClient.getAccessToken().getScopes());
-            response.put("expiresAt", authorizedClient.getAccessToken().getExpiresAt());
-            // Extract refresh token if present
-            if (authorizedClient.getRefreshToken() != null) {
-                response.put("refreshToken", authorizedClient.getRefreshToken().getTokenValue());
-            }
-            LOG.info("Token details retrieved: scopes={}, expiresAt={}", response.get("scopes"),
-                    response.get("expiresAt"));
-        } else {
-            response.put("error", "No authorized client found");
-            LOG.warn("No authorized client present for request: {}", request.getRequestURI());
         }
         return response;
     }

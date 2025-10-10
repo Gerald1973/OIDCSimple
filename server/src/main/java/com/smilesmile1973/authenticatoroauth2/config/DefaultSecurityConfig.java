@@ -3,11 +3,14 @@ package com.smilesmile1973.authenticatoroauth2.config;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.smilesmile1973.authenticatoroauth2.service.RegisteredClientLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -19,8 +22,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -36,6 +43,9 @@ import jakarta.xml.bind.Unmarshaller;
 public class DefaultSecurityConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultSecurityConfig.class);
+
+    @Autowired
+    private RegisteredClientLoader registeredClientLoader;
 
     @Bean
     @Order(1)
@@ -101,6 +111,27 @@ public class DefaultSecurityConfig {
     @Bean
     OAuth2AuthorizationService oAuth2AuthorizationService() {
         return new CustomOAuth2AuthorizationService();
+    }
+
+    @Bean
+    public TokenSettings tokenSettings() {
+        LOG.info("Creating global TokenSettings with access token: {}s, refresh token: {}s",
+                300, 600);
+
+        return TokenSettings.builder()
+                .accessTokenTimeToLive(Duration.ofSeconds(300))
+                .refreshTokenTimeToLive(Duration.ofSeconds(600))
+                .build();
+    }
+
+    @Bean
+    public RegisteredClientRepository registeredClientRepository() {
+        LOG.info("Loading RegisteredClients from XML file");
+        List<RegisteredClient> clients = registeredClientLoader.loadClientsFromXml("clients.xml");
+        if (clients.isEmpty()) {
+            LOG.warn("No clients loaded from XML, repository will be empty");
+        }
+        return new InMemoryRegisteredClientRepository(clients);
     }
 
 }
