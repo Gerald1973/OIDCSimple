@@ -114,17 +114,6 @@ public class DefaultSecurityConfig {
     }
 
     @Bean
-    public TokenSettings tokenSettings() {
-        LOG.info("Creating global TokenSettings with access token: {}s, refresh token: {}s",
-                300, 600);
-
-        return TokenSettings.builder()
-                .accessTokenTimeToLive(Duration.ofSeconds(300))
-                .refreshTokenTimeToLive(Duration.ofSeconds(600))
-                .build();
-    }
-
-    @Bean
     public RegisteredClientRepository registeredClientRepository() {
         LOG.info("Loading RegisteredClients from XML file");
         List<RegisteredClient> clients = registeredClientLoader.loadClientsFromXml("clients.xml");

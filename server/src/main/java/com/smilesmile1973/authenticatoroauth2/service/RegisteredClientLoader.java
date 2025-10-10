@@ -74,6 +74,15 @@ public class RegisteredClientLoader {
                 .refreshTokenTimeToLive(Duration.ofSeconds(
                         clientXml.getRefreshTokenDuration() != null ? clientXml.getRefreshTokenDuration() : 86400))
                 .build();
+        LOG.info("Building RegisteredClient for clientId: {}", clientXml.getClientId());
+        LOG.info("  - Access Token Duration (XML): {} seconds", clientXml.getAccessTokenDuration());
+        LOG.info("  - Access Token TTL (TokenSettings): {} seconds",
+                tokenSettings.getAccessTokenTimeToLive().getSeconds());
+        // Ajouter {noop} si le secret n'a pas de préfixe d'encodeur
+        String clientSecret = clientXml.getClientSecret();
+        if (clientSecret != null && !clientSecret.startsWith("{")) {
+            clientSecret = "{noop}" + clientSecret;
+        }
 
         // Build RegisteredClient
         RegisteredClient.Builder builder = RegisteredClient.withId(clientXml.getId())
