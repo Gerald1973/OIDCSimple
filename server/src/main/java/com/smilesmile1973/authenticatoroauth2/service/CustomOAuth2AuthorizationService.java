@@ -32,6 +32,11 @@ public class CustomOAuth2AuthorizationService implements OAuth2AuthorizationServ
         principalAuthorizations.computeIfAbsent(authorization.getPrincipalName(), k -> new ArrayList<>())
                 .add(authorization);
         LOG.info("Saved authorization for principal: {}", authorization.getPrincipalName());
+        if (authorization.getRefreshToken() != null) {
+            LOG.info("Refresh token generated/updated for principal: {} (expires at: {})",
+                    authorization.getPrincipalName(),
+                    authorization.getRefreshToken().getToken().getExpiresAt());
+        }
     }
 
     @Override
@@ -46,6 +51,9 @@ public class CustomOAuth2AuthorizationService implements OAuth2AuthorizationServ
             }
         }
         LOG.debug("Removed authorization for principal: {}", authorization.getPrincipalName());
+        if (authorization.getRefreshToken() != null) {
+            LOG.info("Refresh token revoked for principal: {}", authorization.getPrincipalName());
+        }
     }
 
     @Override

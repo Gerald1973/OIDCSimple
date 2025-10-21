@@ -4,8 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,19 +16,9 @@ public class PrincipalController {
 
     private static final Logger LOG = LoggerFactory.getLogger(PrincipalController.class);
 
-
-    @GetMapping({ "/principal/info" })
-    public Map<String, Object> index(@AuthenticationPrincipal OAuth2User principal, HttpServletRequest request) {
-        LOG.info("Accessing index page ({}); Principal present: {}", request.getRequestURI(), principal != null);
-        Map<String, Object> response = new HashMap<>();
-        if (principal != null) {
-            response.putAll(principal.getAttributes());
-            LOG.info("Authenticated user sub: {}", principal.getAttribute("sub").toString());
-        } else {
-            response.put("error", "No authenticated principal found");
-            LOG.warn("No principal present for request: {}", request.getRequestURI());
-        }
-        return response;
+    @GetMapping("/principal/info")
+    public OAuth2User getOidcUserPrincipal(@AuthenticationPrincipal final OAuth2User principal) {
+        return principal;
     }
 
     @GetMapping("/principal/logout")
