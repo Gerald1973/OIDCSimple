@@ -2,4 +2,8 @@
 <users>
     <user username="admin" password="{noop}password" roles="ADMIN" />
     <user username="user1" password="{noop}secret" roles="USER" />
+    <user username="gmarechal" password="{noop}password" roles="USER" />
+    <user username="agonzalez" password="{noop}password" roles="USER" />
+    <user username="ibudnyk" password="{noop}password" roles="USER" />
+    <user username="cschoenecker" password="{noop}password" roles="USER" />
 </users>

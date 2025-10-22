@@ -1,12 +1,6 @@
 package com.smilesmile1973.authenticatoroauth2.config;
 
-import static org.springframework.security.config.Customizer.withDefaults;
-
-import java.io.InputStream;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.smilesmile1973.authenticatoroauth2.service.CustomOAuth2AuthorizationService;
 import com.smilesmile1973.authenticatoroauth2.service.RegisteredClientLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +10,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,23 +19,19 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
-import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
-import com.smilesmile1973.authenticatoroauth2.model.UserXml;
-import com.smilesmile1973.authenticatoroauth2.model.UsersXml;
-import com.smilesmile1973.authenticatoroauth2.service.CustomOAuth2AuthorizationService;
+import java.util.List;
 
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.Unmarshaller;
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
 public class DefaultSecurityConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultSecurityConfig.class);
-
+    @Autowired
+    UserDetailsService customUserDetailsService;
     @Autowired
     private RegisteredClientLoader registeredClientLoader;
 
@@ -62,50 +50,11 @@ public class DefaultSecurityConfig {
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         LOG.info("Initializing default security filter chain for non-OAuth2 endpoints");
         http.authorizeHttpRequests(
-                authorizeRequests -> authorizeRequests
-                .requestMatchers("/admin/current-user", "/admin/logout").authenticated()
-                .requestMatchers("/admin/**").hasRole("ADMIN").anyRequest().authenticated())
+                        authorizeRequests -> authorizeRequests
+                                .requestMatchers("/admin/current-user", "/admin/logout").authenticated()
+                                .requestMatchers("/admin/**").hasRole("ADMIN").anyRequest().authenticated())
                 .formLogin(withDefaults());
         return http.build();
-    }
-
-    @Bean
-    UserDetailsService users() {
-        PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
-
-        try {
-            InputStream xmlStream = getClass().getClassLoader().getResourceAsStream("users.xml");
-            if (xmlStream == null) {
-                throw new RuntimeException("users.xml file not found.");
-            }
-            JAXBContext jaxbContext = JAXBContext.newInstance(UsersXml.class);
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            UsersXml usersXml = (UsersXml) unmarshaller.unmarshal(xmlStream);
-
-            List<UserDetails> userDetailsList = new ArrayList<>();
-            for (UserXml userXml : usersXml.getUsers()) {
-                UserDetails userDetails = User.builder()
-                        .username(userXml.getUsername())
-                        .password(userXml.getPassword()) // Assume already encoded or {noop}
-                        .roles(userXml.getRoles().split(","))
-                        .build();
-                userDetailsList.add(userDetails);
-            }
-
-            manager = new InMemoryUserDetailsManager(userDetailsList);
-            LOG.info("{} users loaded from users.xml", userDetailsList.size());
-        } catch (Exception e) {
-            LOG.error("Erreur lors du chargement de users.xml, fallback sur user par défaut", e);
-            UserDetails defaultUser = User.builder()
-                    .username("admin")
-                    .password(encoder.encode("password"))
-                    .roles("ADMIN")
-                    .build();
-            manager = new InMemoryUserDetailsManager(defaultUser);
-        }
-
-        return manager;
     }
 
     @Bean
@@ -121,6 +70,12 @@ public class DefaultSecurityConfig {
             LOG.warn("No clients loaded from XML, repository will be empty");
         }
         return new InMemoryRegisteredClientRepository(clients);
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        LOG.info("TTTTTTTTTTTTTTTTTTTTTTTTT");
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
 }

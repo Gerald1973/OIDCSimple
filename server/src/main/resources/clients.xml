@@ -9,19 +9,31 @@
         <grantTypes>authorization_code,refresh_token</grantTypes>
         <redirectUris>http://127.0.0.1:8081/login/oauth2/code/articles-client-oidc,http://127.0.0.1:8081/authorized</redirectUris>
         <scopes>openid,articles.read</scopes>
-        <accessTokenDuration>18000</accessTokenDuration>
-        <refreshTokenDuration>86400</refreshTokenDuration>
+        <accessTokenDuration>120</accessTokenDuration>
+        <refreshTokenDuration>180</refreshTokenDuration>
     </client>
-    <!--<client>
-        <id>admin-client-id</id>
-        <clientId>admin-client</clientId>
+    <client>
+        <id>editcat</id>
+        <clientId>editcat</clientId>
         <clientSecret>{noop}secret2</clientSecret>
-        <clientName>Admin Client</clientName>
+        <clientName>Editcat client</clientName>
         <authenticationMethods>client_secret_basic</authenticationMethods>
         <grantTypes>authorization_code,refresh_token</grantTypes>
-        <redirectUris>http://127.0.0.1:8082/login/oauth2/code/admin-client-oidc,http://127.0.0.1:8082/authorized</redirectUris>
-        <scopes>openid,admin.read,admin.write</scopes>
-        <accessTokenDuration>7200</accessTokenDuration>
-        <refreshTokenDuration>604800</refreshTokenDuration>
-    </client>-->
+        <redirectUris>http://localhost:8080/catalogue/login/oauth2/code/editcat-local,https://localhost:8080/catalogue/authorized</redirectUris>
+        <scopes>openid</scopes>
+        <accessTokenDuration>10</accessTokenDuration>
+        <refreshTokenDuration>60</refreshTokenDuration>
+    </client>
+    <client>
+        <id>appftu</id>
+        <clientId>appftu</clientId>
+        <clientSecret>{noop}secret3</clientSecret>
+        <clientName>Appftu client</clientName>
+        <authenticationMethods>client_secret_basic</authenticationMethods>
+        <grantTypes>authorization_code,refresh_token</grantTypes>
+        <redirectUris>http://localhost:8080/appftu/login/oauth2/code/appftu-local</redirectUris>
+        <scopes>openid</scopes>
+        <accessTokenDuration>150</accessTokenDuration>
+        <refreshTokenDuration>600</refreshTokenDuration>
+    </client>
 </clients>
