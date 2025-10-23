@@ -1,5 +1,7 @@
 package com.smilesmile1973.authenticatoroauth2.service;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -28,35 +30,30 @@ public class RegisteredClientLoader {
     /**
      * Load RegisteredClient instances from an XML file.
      *
-     * @param xmlFileName the name of the XML file (e.g., "clients.xml")
+     * @param clientsConfigPath the name of the XML file (e.g., "clients.xml")
      * @return a list of RegisteredClient instances
      */
-    public List<RegisteredClient> loadClientsFromXml(String xmlFileName) {
+    public List<RegisteredClient> loadClientsFromXml(String clientsConfigPath) throws Exception {
         List<RegisteredClient> registeredClients = new ArrayList<>();
-
-        try {
-            InputStream xmlStream = getClass().getClassLoader().getResourceAsStream(xmlFileName);
-            if (xmlStream == null) {
-                throw new RuntimeException("XML file not found: " + xmlFileName);
-            }
-
-            JAXBContext jaxbContext = JAXBContext.newInstance(ClientsXml.class);
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            ClientsXml clientsXml = (ClientsXml) unmarshaller.unmarshal(xmlStream);
-
-            for (ClientXml clientXml : clientsXml.getClients()) {
-                RegisteredClient registeredClient = buildRegisteredClient(clientXml);
-                registeredClients.add(registeredClient);
-                LOG.info("Loaded client: {} with id: {}", clientXml.getClientId(), clientXml.getId());
-                ClientXmlPrinter.printAsTable(clientXml);
-            }
-
-            LOG.info("Successfully loaded {} clients from {}", registeredClients.size(), xmlFileName);
-        } catch (Exception e) {
-            LOG.error("Error loading clients from XML file: {}", xmlFileName, e);
-            throw new RuntimeException("Failed to load clients from XML", e);
+        InputStream xmlStream = null;
+        File configFile = new File(clientsConfigPath);
+        if (configFile.exists() && configFile.isFile()) {
+            xmlStream = new FileInputStream(configFile);
+            LOG.info("Loading clients from filesystem path: {}", clientsConfigPath);
+        } else {
+            xmlStream = getClass().getClassLoader().getResourceAsStream(clientsConfigPath);
+            LOG.info("Loading clients from classpath: {}", clientsConfigPath);
         }
-
+        JAXBContext jaxbContext = JAXBContext.newInstance(ClientsXml.class);
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        ClientsXml clientsXml = (ClientsXml) unmarshaller.unmarshal(xmlStream);
+        for (ClientXml clientXml : clientsXml.getClients()) {
+            RegisteredClient registeredClient = buildRegisteredClient(clientXml);
+            registeredClients.add(registeredClient);
+            LOG.info("Loaded client: {} with id: {}", clientXml.getClientId(), clientXml.getId());
+            ClientXmlPrinter.printAsTable(clientXml);
+        }
+        LOG.info("Successfully loaded {} clients from {}", registeredClients.size(), clientsConfigPath);
         return registeredClients;
     }
 
@@ -75,52 +72,42 @@ public class RegisteredClientLoader {
                         clientXml.getRefreshTokenDuration() != null ? clientXml.getRefreshTokenDuration() : 86400))
                 .build();
         LOG.info("Building RegisteredClient for clientId: {}", clientXml.getClientId());
-        LOG.info("  - Access Token Duration (XML): {} seconds", clientXml.getAccessTokenDuration());
+        LOG.info("  - Access Token Duration (XML)     : {} seconds", clientXml.getAccessTokenDuration());
         LOG.info("  - Access Token TTL (TokenSettings): {} seconds",
                 tokenSettings.getAccessTokenTimeToLive().getSeconds());
-        // Ajouter {noop} si le secret n'a pas de préfixe d'encodeur
         String clientSecret = clientXml.getClientSecret();
         if (clientSecret != null && !clientSecret.startsWith("{")) {
             clientSecret = "{noop}" + clientSecret;
         }
-
-        // Build RegisteredClient
         RegisteredClient.Builder builder = RegisteredClient.withId(clientXml.getId())
                 .clientId(clientXml.getClientId())
-                .clientSecret(clientXml.getClientSecret())
+                .clientSecret(clientSecret)
                 .clientName(clientXml.getClientName());
 
-        // Add authentication methods
         if (clientXml.getAuthenticationMethods() != null) {
             for (String method : clientXml.getAuthenticationMethods().split(",")) {
                 builder.clientAuthenticationMethod(parseAuthenticationMethod(method.trim()));
             }
         }
 
-        // Add grant types
         if (clientXml.getGrantTypes() != null) {
             for (String grantType : clientXml.getGrantTypes().split(",")) {
                 builder.authorizationGrantType(parseGrantType(grantType.trim()));
             }
         }
 
-        // Add redirect URIs
         if (clientXml.getRedirectUris() != null) {
             for (String redirectUri : clientXml.getRedirectUris().split(",")) {
                 builder.redirectUri(redirectUri.trim());
             }
         }
 
-        // Add scopes
         if (clientXml.getScopes() != null) {
             for (String scope : clientXml.getScopes().split(",")) {
                 builder.scope(scope.trim());
             }
         }
-
-        // Set token settings
         builder.tokenSettings(tokenSettings);
-
         return builder.build();
     }
 

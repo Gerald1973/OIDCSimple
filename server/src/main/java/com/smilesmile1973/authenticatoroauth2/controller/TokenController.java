@@ -37,7 +37,7 @@ public class TokenController {
                                                                                       // TokenController.class
 
     @Autowired
-    private OAuth2AuthorizationService authorizationService; // Note: This will be the custom service
+    private OAuth2AuthorizationService customOAuth2AuthorizationService;
 
     @PostMapping("/revoke-token")
     @PreAuthorize("hasRole('ADMIN')") // Secure for admin role only
@@ -47,16 +47,12 @@ public class TokenController {
             LOG.warn("Revocation request missing token");
             return ResponseEntity.badRequest().body("Token is required");
         }
-
-        // Find authorization by access token
-        OAuth2Authorization authorization = authorizationService.findByToken(token, OAuth2TokenType.ACCESS_TOKEN);
+        OAuth2Authorization authorization = customOAuth2AuthorizationService.findByToken(token, OAuth2TokenType.ACCESS_TOKEN);
         if (authorization == null) {
-            // Fallback to check if it's a refresh token
-            authorization = authorizationService.findByToken(token, OAuth2TokenType.REFRESH_TOKEN);
+            authorization = customOAuth2AuthorizationService.findByToken(token, OAuth2TokenType.REFRESH_TOKEN);
         }
-
         if (authorization != null) {
-            authorizationService.remove(authorization);
+            customOAuth2AuthorizationService.remove(authorization);
             if (!CollectionUtils.isEmpty(authorization.getAttributes())) {
                 String userName = authorization.getAttribute(OAuth2TokenIntrospectionClaimNames.SUB);
                 if (userName != null) {
@@ -73,12 +69,12 @@ public class TokenController {
     @GetMapping("/list-tokens/{username}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Map<String, Object>>> listTokensByUsername(@PathVariable String username) {
-        if (!(authorizationService instanceof CustomOAuth2AuthorizationService)) {
+        if (!(customOAuth2AuthorizationService instanceof CustomOAuth2AuthorizationService)) {
             LOG.error("Authorization service is not custom - cannot list by principal");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
 
-        CustomOAuth2AuthorizationService customService = (CustomOAuth2AuthorizationService) authorizationService;
+        CustomOAuth2AuthorizationService customService = (CustomOAuth2AuthorizationService) customOAuth2AuthorizationService;
         List<OAuth2Authorization> authorizations = customService.findByPrincipalName(username);
 
         List<Map<String, Object>> tokens = new ArrayList<>();

@@ -5,6 +5,7 @@ import com.smilesmile1973.authenticatoroauth2.service.RegisteredClientLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -26,12 +27,13 @@ import java.util.List;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebSecurity(debug = true)
 public class DefaultSecurityConfig {
 
+    @Value("${clients.config.path:clients.xml}")
+    private String clientsConfigPath;
+
     private static final Logger LOG = LoggerFactory.getLogger(DefaultSecurityConfig.class);
-    @Autowired
-    UserDetailsService customUserDetailsService;
     @Autowired
     private RegisteredClientLoader registeredClientLoader;
 
@@ -41,7 +43,7 @@ public class DefaultSecurityConfig {
         LOG.info("Initializing OAuth2 Authorization Server filter chain");
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-                .oidc(withDefaults()); // Enable OpenID Connect 1.0
+                .oidc(withDefaults());
         return http.formLogin(withDefaults()).build();
     }
 
@@ -58,24 +60,13 @@ public class DefaultSecurityConfig {
     }
 
     @Bean
-    OAuth2AuthorizationService oAuth2AuthorizationService() {
-        return new CustomOAuth2AuthorizationService();
-    }
-
-    @Bean
-    public RegisteredClientRepository registeredClientRepository() {
+    public RegisteredClientRepository registeredClientRepository() throws Exception {
         LOG.info("Loading RegisteredClients from XML file");
-        List<RegisteredClient> clients = registeredClientLoader.loadClientsFromXml("clients.xml");
+        List<RegisteredClient> clients = registeredClientLoader.loadClientsFromXml(clientsConfigPath);
         if (clients.isEmpty()) {
             LOG.warn("No clients loaded from XML, repository will be empty");
         }
         return new InMemoryRegisteredClientRepository(clients);
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        LOG.info("TTTTTTTTTTTTTTTTTTTTTTTTT");
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
 }

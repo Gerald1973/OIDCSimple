@@ -6,24 +6,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
+import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
+@Component
 public class CustomOAuth2AuthorizationService implements OAuth2AuthorizationService {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomOAuth2AuthorizationService.class);
 
-    private final InMemoryOAuth2AuthorizationService delegate;
+    private InMemoryOAuth2AuthorizationService delegate;
     private final Map<String, List<OAuth2Authorization>> principalAuthorizations = new ConcurrentHashMap<>();
 
-    public CustomOAuth2AuthorizationService() {
-        this.delegate = new InMemoryOAuth2AuthorizationService();
-    }
+   @PostConstruct
+   private void init() {
+       this.delegate = new InMemoryOAuth2AuthorizationService();
+   }
 
     @Override
     public void save(OAuth2Authorization authorization) {

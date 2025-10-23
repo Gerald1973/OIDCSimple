@@ -44,7 +44,7 @@ bin/
 # VS Code
 .vscode/
 
-
+externalconfig/
 ### Fichiers système ###
 
 # macOS
