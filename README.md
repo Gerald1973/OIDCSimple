@@ -1,298 +1,300 @@
-# OIDCSimple - OAuth2/OIDC Authorization Server & Client
+# OIDCSimple - OAuth2/OIDC Authorization Server \& Client
 
-A comprehensive OAuth2/OpenID Connect (OIDC) implementation using Spring Boot. This project provides a complete authorization server and client setup with XML-based configuration for users and OAuth2 clients.
+OIDCSimple is a complete **Spring Boot OAuth2 + OpenID Connect (OIDC)** solution providing both an **Authorization Server** and an **OAuth2 Client**.
+It supports configuration through **XML files**, **external configuration properties**, and **full Docker Compose deployment**.
+
+***
 
 ## 🏗️ Project Architecture
 
-This repository contains two main modules:
+| Module | Description |
+| :-- | :-- |
+| **server/** | Provides the OAuth2 Authorization and OIDC Server. Includes authentication, token issuance, revocation, and external XML-based configuration. |
+| **client/** | Demonstrates an OAuth2 Client implementing Authorization Code Flow and accessing protected OIDC resources. |
 
-### 🔐 Authorization Server (`server/`)
-- OAuth2 authorization server handling authentication, token issuance, and revocation
-- OpenID Connect (OIDC) support for identity management
-- XML-based user and client configuration
+
+***
+
+## ✨ Features
+
+- OAuth2 Authorization Code flow with refresh tokens
+- OpenID Connect (OIDC) for identity management
+- XML and external property configurations
 - Admin endpoints for token management
-- Custom token customization and authorization services
+- Custom token TTL and scope definitions
+- Compatible with **Spring Boot 3.5+** and **Java 17+**
+- Fully runnable with **Docker Compose**
 
-### 👤 OAuth2 Client (`client/`)
-- OAuth2 client application demonstrating secure resource access
-- Integration with the authorization server for authentication
-- Protected endpoints requiring specific scopes
-- Token-aware WebClient for API calls
+***
 
-## ✨ Key Features
+## 🛠️ Requirements
 
-- **Authorization Code Grant** with Refresh Tokens
-- **OpenID Connect (OIDC)** for identity management
-- **XML-based Configuration** for users and OAuth2 clients
-- **Admin Token Management** (revocation, listing, user lookup)
-- **Scope-based Authorization** (`openid`, `articles.read`, etc.)
-- **Custom Token Customization** with configurable TTL
-- **Comprehensive Logging** for security and OAuth2 debugging
-- **Production-ready Security** configuration
+- Java 17 or newer
+- Maven 3.x+
+- Docker \& Docker Compose (optional, for deployment)
+- Git, VS Code, or IntelliJ IDEA for development
 
-## 🛠️ Prerequisites
+***
 
-- **Java 17** or higher
-- **Maven 3.x**
-- **IDE** (IntelliJ IDEA, VS Code with Java extensions)
-- **Git** for version control
-
-## 🚀 Quick Start
+## 🚀 Quick Start (Maven)
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/yourusername/OIDCSimple.git
 cd OIDCSimple
 ```
 
-### 2. Build the Projects
-```bash
-# Build authorization server
-cd server
-mvn clean install
 
-# Build client
-cd ../client
-mvn clean install
+### 2. Build the Modules
+
+```bash
+cd server && mvn clean install
+cd ../client && mvn clean install
 ```
 
-### 3. Start the Authorization Server
+
+### 3. Run the Server
+
 ```bash
 cd server
 mvn spring-boot:run
 ```
-Authorization server will be available at: `http://localhost:9080`
 
-### 4. Start the Client Application
+Server runs at: [http://localhost:9080](http://localhost:9080)
+
+### 4. Run the Client
+
 ```bash
 cd client
 mvn spring-boot:run
 ```
-Client application will be available at: `http://localhost:8081`
 
-## ⚙️ Configuration
+Client runs at: [http://localhost:8081](http://localhost:8081)
 
-### 🔧 User Configuration (`users.xml`)
+***
 
-Users are defined in `server/src/main/resources/users.xml`:
+## ⚙️ Configuration Files
+
+Internal configuration files (used by default):
+
+```
+server/src/main/resources/
+├── users.xml
+├── clients.xml
+└── application.properties
+```
+
+To override them, you can use **external configuration files**.
+
+***
+
+## 🧩 External Configuration
+
+### 1. Example Folder Structure
+
+```
+~/git/OIDCSimple/externalconfig/
+├── users.xml
+├── clients.xml
+└── application.properties
+```
+
+
+### 2. External Application Properties
+
+```properties
+server.port=9080
+server.servlet.session.timeout=300s
+
+# Logging
+logging.level.root=INFO
+logging.level.org.springframework.web=DEBUG
+logging.level.org.springframework.security=DEBUG
+logging.level.org.springframework.security.oauth2=DEBUG
+
+# External XML paths
+users.config.path=${user.home}/git/OIDCSimple/externalconfig/users.xml
+clients.config.path=${user.home}/git/OIDCSimple/externalconfig/clients.xml
+```
+
+
+### 3. Example users.xml
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
 <users>
-    <user username="admin" password="{noop}password" roles="ADMIN"/>
-    <user username="user1" password="{noop}secret" roles="USER"/>
+  <user username="adminExternal" password="{noop}password" roles="ADMIN"/>
+  <user username="userExt" password="{noop}secret" roles="USER"/>
 </users>
 ```
 
-#### User Configuration Fields:
-- **`username`**: Unique identifier for the user
-- **`password`**: Password with encoding prefix (`{noop}` for plain text, `{bcrypt}` for BCrypt)
-- **`roles`**: Comma-separated roles (ADMIN, USER, etc.)
 
-### 🏢 Client Configuration (`clients.xml`)
-
-OAuth2 clients are configured in `server/src/main/resources/clients.xml`:
+### 4. Example clients.xml
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
 <clients>
-    <client id="articles-client-id">
-        <clientId>articles-client</clientId>
-        <clientSecret>{noop}secret</clientSecret>
-        <clientName>Articles Client</clientName>
-        <authenticationMethods>client_secret_basic</authenticationMethods>
-        <grantTypes>authorization_code,refresh_token</grantTypes>
-        <redirectUris>http://127.0.0.1:8081/login/oauth2/code/articles-client-oidc,http://127.0.0.1:8081/authorized</redirectUris>
-        <scopes>openid,articles.read</scopes>
-        <accessTokenDuration>18000</accessTokenDuration>
-        <refreshTokenDuration>86400</refreshTokenDuration>
-    </client>
+  <client>
+    <id>external-client-id</id>
+    <clientId>external-client</clientId>
+    <clientSecret>{noop}extsecret</clientSecret>
+    <clientName>External Application</clientName>
+    <authenticationMethods>client_secret_basic</authenticationMethods>
+    <grantTypes>authorization_code,refresh_token</grantTypes>
+    <redirectUris>http://127.0.0.1:8081/login/oauth2/code/external-client-oidc</redirectUris>
+    <scopes>openid,profile,email</scopes>
+    <accessTokenDuration>300</accessTokenDuration>
+    <refreshTokenDuration>900</refreshTokenDuration>
+  </client>
 </clients>
 ```
 
-#### Client Configuration Fields:
-- **`id`**: Internal unique identifier
-- **`clientId`**: OAuth2 client identifier
-- **`clientSecret`**: Client secret with encoding prefix
-- **`clientName`**: Human-readable client name
-- **`authenticationMethods`**: Supported authentication methods
-  - `client_secret_basic`: HTTP Basic authentication
-  - `client_secret_post`: POST form parameters
-  - `client_secret_jwt`: JWT assertion
-  - `private_key_jwt`: Private key JWT
-  - `none`: Public client
-- **`grantTypes`**: Supported OAuth2 grant types
-  - `authorization_code`: Authorization Code Grant
-  - `refresh_token`: Refresh Token Grant
-  - `client_credentials`: Client Credentials Grant
-- **`redirectUris`**: Comma-separated authorized redirect URIs
-- **`scopes`**: Comma-separated OAuth2 scopes
-- **`accessTokenDuration`**: Access token TTL in seconds
-- **`refreshTokenDuration`**: Refresh token TTL in seconds
 
-### 📋 Application Properties
+### 5. Launch with External Config
 
-#### Authorization Server (`server/src/main/resources/application.properties`)
-```properties
-# Server Configuration
-server.port=9080
-
-# OAuth2 Authorization Server
-spring.security.oauth2.authorizationserver.issuer=http://fake.localhost:9080
-
-# Logging Configuration
-logging.level.root=INFO
-logging.level.org.springframework.web=INFO
-logging.level.org.springframework.security=INFO
-logging.level.org.springframework.security.oauth2=DEBUG
+```bash
+mvn spring-boot:run -Dspring.config.location="file:${user.home}/git/OIDCSimple/externalconfig/application.properties"
 ```
 
-#### OAuth2 Client (`client/src/main/resources/application.properties`)
-```properties
-# Server Configuration
-server.port=8081
+Or via your IDE (VM Options):
 
-# OAuth2 Client Registration
-spring.security.oauth2.client.registration.articles-client-oidc.provider=spring
-spring.security.oauth2.client.registration.articles-client-oidc.client-id=articles-client
-spring.security.oauth2.client.registration.articles-client-oidc.client-secret=secret
-spring.security.oauth2.client.registration.articles-client-oidc.authorization-grant-type=authorization_code
-spring.security.oauth2.client.registration.articles-client-oidc.redirect-uri=http://127.0.0.1:8081/login/oauth2/code/{registrationId}
-spring.security.oauth2.client.registration.articles-client-oidc.scope=openid
-spring.security.oauth2.client.registration.articles-client-oidc.client-name=articles-client-oidc
-
-# OAuth2 Provider Configuration
-spring.security.oauth2.client.provider.spring.issuer-uri=http://localhost:9080
+```
+-Dspring.config.location=file:${user.home}/git/OIDCSimple/externalconfig/application.properties
 ```
 
-## 🌐 API Endpoints
 
-### 🔐 Authorization Server Endpoints
+***
 
-#### OAuth2 Core Endpoints
-- **`GET /oauth2/authorize`** - Authorization endpoint for OAuth2 flows
-- **`POST /oauth2/token`** - Token endpoint for access/refresh tokens
-- **`POST /oauth2/revoke`** - Token revocation endpoint
-- **`GET /.well-known/openid_configuration`** - OIDC discovery endpoint
+## 🐳 Docker Compose Deployment
 
-#### Admin Endpoints (Requires ADMIN role)
-- **`POST /admin/revoke-token`** - Revoke a specific token
-- **`GET /admin/list-tokens/{username}`** - List all tokens for a user
-- **`GET /admin/current-user`** - Get current authenticated user info
-- **`GET /admin/logout`** - Logout current user
+### 1. Create docker-compose.yml
 
-### 👤 OAuth2 Client Endpoints
+```yaml
+version: '3.8'
 
-- **`GET /`** - Home page (redirects to principal info)
-- **`GET /principal/info`** - Get authenticated user information
-- **`GET /principal/token`** - Get current token details
-- **`GET /principal/logout`** - Logout from client
-- **`GET /articles`** - Protected resource (requires `articles.read` scope)
-- **`GET /util/server-time`** - Utility endpoint for server time
-- **`GET /util/timezones`** - Utility endpoint for available timezones
+services:
+  oidc-server:
+    build: ./server
+    container_name: oidcsimple-server
+    ports:
+      - "9080:9080"
+    volumes:
+      - ./externalconfig:/externalconfig
+    environment:
+      - SPRING_CONFIG_LOCATION=file:/externalconfig/application.properties
+    networks:
+      - oidc-network
 
-## 🔄 OAuth2 Flow Example
+  oidc-client:
+    build: ./client
+    container_name: oidcsimple-client
+    ports:
+      - "8081:8081"
+    depends_on:
+      - oidc-server
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - oidc-network
 
-1. **Access Protected Resource**: Navigate to `http://localhost:8081/articles`
-2. **Redirect to Authorization Server**: Client redirects to `http://localhost:9080/oauth2/authorize`
-3. **User Authentication**: Login with credentials from `users.xml` (e.g., `admin`/`password`)
-4. **Authorization Grant**: User grants access to requested scopes
-5. **Token Exchange**: Client exchanges authorization code for access token
-6. **Access Protected Resource**: Client uses access token to fetch articles
-
-## 🔧 Development
-
-### Project Structure
-```
-OIDCSimple/
-├── server/                          # Authorization Server
-│   ├── src/main/java/
-│   │   └── com/smilesmile1973/authenticatoroauth2/
-│   │       ├── config/             # Security and OAuth2 configuration
-│   │       ├── controller/         # REST endpoints
-│   │       ├── model/              # XML mapping models
-│   │       ├── service/            # Business logic services
-│   │       └── util/               # Utility classes
-│   ├── src/main/resources/
-│   │   ├── users.xml              # User configuration
-│   │   ├── clients.xml            # OAuth2 client configuration
-│   │   └── application.properties # Server properties
-│   └── pom.xml                    # Maven dependencies
-├── client/                         # OAuth2 Client
-│   ├── src/main/java/
-│   │   └── com/smilesmile1973/clientoauth2/
-│   │       ├── config/            # Security and WebClient configuration
-│   │       └── controller/        # REST endpoints
-│   ├── src/main/resources/
-│   │   └── application.properties # Client properties
-│   └── pom.xml                   # Maven dependencies
-└── .vscode/                      # VS Code configuration
-    ├── launch.json              # Debug configurations
-    └── settings.json           # Workspace settings
+networks:
+  oidc-network:
+    driver: bridge
 ```
 
-### 🐛 Debugging
 
-#### VS Code Configuration
-The project includes pre-configured launch settings for debugging both applications:
+### 2. Run Both Services
 
-- **AuthenticatorOauth2Application**: Debug authorization server
-- **ClientOauth2Application**: Debug OAuth2 client
+```bash
+docker-compose up --build
+```
+***
 
-#### Logging
-- Security events: `INFO` level
-- OAuth2 flows: `DEBUG` level
-- Customize logging in `application.properties`
+## 🔐 API Endpoints
 
-### 🧪 Testing
+### Authorization Server
 
-#### Manual Testing Flow
-1. Start both applications
-2. Access `http://localhost:8081/articles`
-3. Login with `admin`/`password`
-4. Verify token exchange and resource access
+| Endpoint | Method | Description |
+| :-- | :-- | :-- |
+| `/oauth2/authorize` | GET | Start of OAuth2 Authorization Code flow |
+| `/oauth2/token` | POST | Token issuance endpoint |
+| `/oauth2/revoke` | POST | Token revocation |
+| `/.well-known/openid-configuration` | GET | Standard OIDC discovery document |
+| `/admin/list-tokens/{username}` | GET | List tokens for a given user |
+| `/admin/revoke-token` | POST | Revoke a token |
+| `/admin/current-user` | GET | Info about the current authenticated user |
 
-#### Admin Token Management
-1. Login as admin user
-2. Access `http://localhost:9080/admin/list-tokens/user1`
-3. Test token revocation via `POST /admin/revoke-token`
+### OAuth2 Client
 
-## 🚨 Security Considerations
+| Endpoint | Method | Description |
+| :-- | :-- | :-- |
+| `/` | GET | Home page |
+| `/principal/info` | GET | Get OIDC principal info |
+| `/principal/token` | GET | Token details |
+| `/articles` | GET | Protected resource requiring scope `articles.read` |
+| `/util/server-time` | GET | Return current server time |
 
-### Production Deployment
-- **Replace `{noop}` passwords** with `{bcrypt}` encoded passwords
-- **Use HTTPS** for all communications
-- **Secure client secrets** and use proper key management
-- **Configure proper CORS** settings
-- **Use production-grade databases** instead of in-memory storage
-- **Implement rate limiting** for token endpoints
-- **Regular security audits** and dependency updates
 
-### Network Configuration
-- Use `127.0.0.1` instead of `localhost` for redirect URIs to avoid hostname resolution issues
-- Configure proper firewall rules for production environments
+***
 
-## 📄 License
+## 🔄 Example OAuth2 Flow
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+1. Open `http://localhost:8081/articles`
+2. Redirected to `http://localhost:9080/oauth2/authorize`
+3. Log in with credentials (`admin` / `password`)
+4. Approve requested scopes
+5. Retrieve access and refresh tokens
+6. Access protected resource `/articles`
+
+***
+
+## 🔧 Dockerfile Example
+
+**server/Dockerfile**
+
+```dockerfile
+FROM eclipse-temurin:17-jdk
+WORKDIR /app
+COPY target/*.jar app.jar
+EXPOSE 9080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+**client/Dockerfile**
+
+```dockerfile
+FROM eclipse-temurin:17-jdk
+WORKDIR /app
+COPY target/*.jar app.jar
+EXPOSE 8081
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+
+***
+
+## 🔒 Security Best Practices
+
+- Replace `{noop}` with `{bcrypt}` in production
+- Always use HTTPS in production deployments
+- Secure environment variables and client secrets
+- Enable rate limiting on `/token` endpoints
+- Regularly rotate keys and tokens
+
+***
+
+## 📜 License
+
+This project is licensed under the **MIT License**.
+
+***
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create a new branch: `feature/my-enhancement`
+3. Commit your work: `git commit -m "Add feature"`
+4. Push your branch: `git push origin feature/my-enhancement`
 5. Open a Pull Request
 
-## 📞 Support
+***
 
-If you encounter any issues or have questions:
-
-1. Check the logs for detailed error messages
-2. Verify configuration files (`users.xml`, `clients.xml`, `application.properties`)
-3. Ensure proper port availability (9080, 8081)
-4. Create an issue on GitHub with detailed information
-
----
-
-**Built with ❤️ using Spring Boot, Spring Security, and OAuth2/OIDC standards**
