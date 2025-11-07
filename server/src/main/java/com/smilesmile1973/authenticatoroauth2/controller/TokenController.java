@@ -19,9 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.smilesmile1973.authenticatoroauth2.service.CustomOAuth2AuthorizationService;
-
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
@@ -29,18 +27,40 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * REST controller for managing OAuth2 tokens and user authentication.
+ * Provides administrative endpoints for token management, user information,
+ * and authentication operations.
+ *
+ * <p>All administrative operations require ADMIN role authorization.</p>
+ *
+ * @author smilesmile1973
+ * @version 1.0
+ * @since 1.0
+ */
 @RestController
 @RequestMapping("/admin")
 public class TokenController {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TokenController.class); // MODIFIED: Updated to
-                                                                                      // TokenController.class
-
+    private static final Logger LOG = LoggerFactory.getLogger(TokenController.class);
     @Autowired
     private OAuth2AuthorizationService customOAuth2AuthorizationService;
 
+    /**
+     * Revokes an OAuth2 token (access or refresh token).
+     *
+     * <p>This endpoint allows administrators to revoke tokens by providing
+     * the token value in the request body. The method will search for both
+     * access and refresh tokens and remove the associated authorization.</p>
+     *
+     * @param request a map containing the token to be revoked with key "token"
+     * @return ResponseEntity with success message if token is revoked,
+     * bad request if token is missing, or not found if token doesn't exist
+     * @throws IllegalArgumentException if request body is malformed
+     * @see OAuth2Authorization
+     * @see OAuth2TokenType
+     */
     @PostMapping("/revoke-token")
-    @PreAuthorize("hasRole('ADMIN')") // Secure for admin role only
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> revokeToken(@RequestBody Map<String, String> request) {
         String token = request.get("token");
         if (token == null || token.isEmpty()) {
@@ -66,54 +86,18 @@ public class TokenController {
         }
     }
 
-    @GetMapping("/list-tokens/{username}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Map<String, Object>>> listTokensByUsername(@PathVariable String username) {
-        if (!(customOAuth2AuthorizationService instanceof CustomOAuth2AuthorizationService)) {
-            LOG.error("Authorization service is not custom - cannot list by principal");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-
-        CustomOAuth2AuthorizationService customService = (CustomOAuth2AuthorizationService) customOAuth2AuthorizationService;
-        List<OAuth2Authorization> authorizations = customService.findByPrincipalName(username);
-
-        List<Map<String, Object>> tokens = new ArrayList<>();
-        for (OAuth2Authorization auth : authorizations) {
-            Map<String, Object> tokenInfo = new HashMap<>();
-
-            // Access Token info (if present)
-            if (auth.getAccessToken() != null) {
-                Map<String, Object> accessToken = new HashMap<>();
-                accessToken.put("expiresAt", auth.getAccessToken().getToken().getExpiresAt());
-                accessToken.put("scopes", auth.getAccessToken().getToken().getScopes());
-                accessToken.put("tokenvalue", auth.getAccessToken().getToken().getTokenValue());
-                tokenInfo.put("accessToken", accessToken);
-            }
-
-            // Refresh Token info (if present)
-            if (auth.getRefreshToken() != null) {
-                Map<String, Object> refreshToken = new HashMap<>();
-                refreshToken.put("expiresAt", auth.getRefreshToken().getToken().getExpiresAt());
-                tokenInfo.put("refreshToken", refreshToken);
-            }
-
-            // Other metadata
-            tokenInfo.put("authorizationId", auth.getId());
-            tokenInfo.put("registeredClientId", auth.getRegisteredClientId());
-            tokenInfo.put("authorizationGrantType", auth.getAuthorizationGrantType().getValue());
-
-            tokens.add(tokenInfo);
-        }
-
-        if (tokens.isEmpty()) {
-            LOG.info("No tokens found for username: {}", username);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(tokens);
-        }
-
-        LOG.info("Listed {} tokens for username: {}", tokens.size(), username);
-        return ResponseEntity.ok(tokens);
-    }
-
+    /**
+     * Retrieves information about the currently authenticated user.
+     *
+     * <p>This endpoint returns the authentication status and username
+     * of the current user based on the security context. No special
+     * authorization is required for this endpoint.</p>
+     *
+     * @return ResponseEntity containing a map with authentication status
+     * and username information
+     * @see SecurityContextHolder
+     * @see Authentication
+     */
     @GetMapping("/current-user")
     public ResponseEntity<Map<String, Object>> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -130,6 +114,19 @@ public class TokenController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Logs out the current user by invalidating their session.
+     *
+     * <p>This endpoint performs a logout operation by calling the
+     * HttpServletRequest.logout() method, which invalidates the
+     * current user session and clears authentication information.</p>
+     *
+     * @param request the HTTP servlet request containing session information
+     * @return ResponseEntity with success message if logout is successful,
+     * or internal server error if logout fails
+     * @throws Exception if logout operation fails
+     * @see HttpServletRequest#logout()
+     */
     @GetMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request) {
         try {
